@@ -1,0 +1,2460 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel Pastoral Escolar</title>
+
+  <!-- Ícones -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Pastoral Escolar">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0ea5e9"/>
+
+  <style>
+    :root{
+      --bg:#eef2fb;
+      --card:#ffffff;
+      --cardTint: rgba(255,255,255,.78);
+      --muted:#5b6b84;
+      --text:#0b1220;
+      --line:rgba(15,23,42,.12);
+      --brand:#0ea5e9;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+
+      /* ABC */
+      --abcA:#22c55e;
+      --abcB:#f59e0b;
+      --abcC:#ef4444;
+
+      --radius:16px;
+      --pad:16px;
+      --shadow: 0 12px 30px rgba(15,23,42,.10);
+      --max:1100px;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(14,165,233,.20), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(34,197,94,.14), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.0), rgba(255,255,255,.55)),
+        var(--bg);
+      color:var(--text);
+    }
+
+    /* ====== Gate de acesso (Login por código) ====== */
+    #authGate{
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+    }
+    #authGate.show{ display:block; }
+    #authGate .bg{
+      position:absolute; inset:0;
+      background: rgba(15,23,42,.55);
+      backdrop-filter: blur(10px);
+    }
+    #authGate .panel{
+      position: relative;
+      max-width: 520px;
+      margin: 10vh auto;
+      padding: 0 16px;
+    }
+    #authGate .box{
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 18px 55px rgba(15,23,42,.25);
+    }
+    #authGate .row2{
+      display:flex; gap:10px; align-items:center;
+    }
+    #authGate .err{
+      margin-top:10px;
+      font-size:12px;
+      font-weight:1000;
+      color: #b91c1c;
+      display:none;
+    }
+
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      background: rgba(238,242,251,.78);
+      backdrop-filter: blur(12px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .logo-img{
+      width:42px;
+      height:42px;
+      object-fit:contain;
+    }
+
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.65);
+      padding:10px 12px;
+      border-radius:999px;
+      display:flex; align-items:center; gap:8px;
+      color:var(--muted);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .wrap{
+      max-width:var(--max);
+      margin:0 auto;
+      padding: 16px 16px 92px;
+    }
+
+    .section{ display:none; }
+    .section.active{ display:block; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .two{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--cardTint);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--pad);
+      box-shadow: var(--shadow);
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .note{
+      font-size:12px; color: var(--muted);
+      line-height: 1.35;
+      font-weight:800;
+    }
+    .hr{ height:1px; background: var(--line); margin: 12px 0; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .right{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.70);
+      color: var(--text);
+      font-weight:950;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(14,165,233,.35);
+      background: rgba(14,165,233,.14);
+    }
+    .btn.good{
+      border-color: rgba(34,197,94,.35);
+      background: rgba(34,197,94,.12);
+    }
+    .btn.danger{
+      border-color: rgba(239,68,68,.35);
+      background: rgba(239,68,68,.10);
+    }
+
+    .input, select{
+      width: 100%;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.75);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline:none;
+      font-weight:850;
+    }
+    label{
+      font-size:12px;
+      font-weight:950;
+      color: var(--muted);
+      display:block;
+      margin: 10px 0 6px;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 980px){
+      .kpis{ grid-template-columns: repeat(2, 1fr); }
+    }
+    .kpi{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.60);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 84px;
+    }
+    .kpi .t{ font-size:12px; color: var(--muted); font-weight:950; }
+    .kpi .v{ font-size:20px; font-weight:1000; margin-top:4px; }
+    .kpi .s{ font-size:12px; color: var(--muted); margin-top:6px; font-weight:850; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.62);
+      font-weight:1000;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{ width:10px; height:10px; border-radius:999px; background: var(--brand); }
+    .dot.ok{ background: var(--ok); }
+    .dot.warn{ background: var(--warn); }
+    .dot.bad{ background: var(--bad); }
+
+    /* ABC badge */
+    .abcBadge{ border-color: rgba(15,23,42,.12); }
+    .abcBadge.A{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .abcBadge.B{ border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10); }
+    .abcBadge.C{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+    .abcDot{ width:10px; height:10px; border-radius:999px; }
+    .abcDot.A{ background: var(--abcA); }
+    .abcDot.B{ background: var(--abcB); }
+    .abcDot.C{ background: var(--abcC); }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .item{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.60);
+      border-radius: 14px;
+      padding: 12px;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      align-items:flex-start;
+    }
+    .item strong{ font-size:14px; }
+    .item small{ color:var(--muted); font-weight:850; }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+    }
+
+    /* Subtabs */
+    .subtabs{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .subtab{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.55);
+      border-radius: 999px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight:1000;
+      color: var(--muted);
+      user-select:none;
+      font-size:12px;
+    }
+    .subtab.active{
+      color: var(--text);
+      border-color: rgba(14,165,233,.30);
+      background: rgba(14,165,233,.14);
+    }
+
+    /* Cards de Registrar */
+    .cardgrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 980px){
+      .cardgrid{ grid-template-columns: 1fr; }
+    }
+    .actioncard{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.58);
+      border-radius: 16px;
+      padding: 14px;
+      cursor:pointer;
+      transition: transform .06s ease, background .2s ease;
+    }
+    .actioncard:active{ transform: translateY(1px); }
+    .actioncard h3{ margin:0; font-size:14px; font-weight:1000; }
+    .actioncard p{ margin:8px 0 0; color:var(--muted); font-weight:850; font-size:12px; line-height:1.35; }
+
+    /* Chart */
+    canvas{
+      width:100%;
+      max-width:100%;
+      height:260px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.55);
+    }
+
+    /* Mobile bottom nav */
+    .bottomnav{
+      position:fixed; left:0; right:0; bottom:0;
+      border-top:1px solid var(--line);
+      background: rgba(238,242,251,.84);
+      backdrop-filter: blur(14px);
+      z-index:60;
+    }
+    .bottomnav-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      display:flex;
+      gap:8px;
+      padding: 10px 10px;
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .bottomnav-inner::-webkit-scrollbar{ display:none; }
+
+    .navbtn{
+      flex: 0 0 auto;
+      min-width: 92px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight:1000;
+      border-radius: 14px;
+      padding: 10px 10px;
+      cursor:pointer;
+    }
+    .navbtn.active{
+      color: var(--text);
+      border-color: rgba(14,165,233,.25);
+      background: rgba(14,165,233,.12);
+    }
+    .navicon{
+      width:20px;
+      height:20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .navicon img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      opacity:.65;
+      transition:.2s;
+    }
+    .navbtn.active .navicon img{ opacity:1; }
+    .navlabel{ font-size:11px; }
+
+    /* Modal */
+    #modal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 80;
+      overscroll-behavior: contain;
+    }
+    #modalOverlay{
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+    }
+    #modalWrap{
+      position: relative;
+      max-width: 780px;
+      margin: 60px auto;
+      padding: 0 16px;
+      height: calc(100vh - 120px);
+      max-height: calc(100vh - 120px);
+      display: flex;
+      flex-direction: column;
+    }
+    #modalBox{
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      max-height: calc(100vh - 120px);
+      touch-action: pan-y;
+    }
+
+    /* Print */
+    @media print{
+      .topbar, .bottomnav, .btn { display:none !important; }
+      body{ background:#fff; }
+      .card{ box-shadow:none; background:#fff; }
+    }
+
+    /* ===== Calendário mensal ===== */
+    .calgrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:8px;
+    }
+    .calDow{
+      font-size:11px;
+      font-weight:1000;
+      color: var(--muted);
+      text-align:center;
+      padding:6px 0;
+    }
+    .calDay{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.60);
+      border-radius: 14px;
+      padding:10px 8px;
+      min-height: 62px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .calDay:active{ transform: translateY(1px); }
+    .calDay.muted{ opacity:.45; }
+    .calDay.active{
+      border-color: rgba(14,165,233,.35);
+      background: rgba(14,165,233,.12);
+    }
+    .calTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:1000;
+    }
+    .calCount{
+      font-size:11px;
+      font-weight:1000;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.70);
+      color: var(--muted);
+    }
+    @media (max-width: 480px){
+      .calDay{ min-height: 54px; padding:8px 6px; border-radius: 12px; }
+      .calCount{ padding:3px 7px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Gate de acesso -->
+<div id="authGate" aria-hidden="true">
+  <div class="bg"></div>
+  <div class="panel">
+    <div class="box">
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <div class="brand" style="gap:10px;">
+          <img src="logo.png" class="logo-img" alt="Logo">
+          <div>
+            <div style="font-weight:1000;">Acesso ao Painel</div>
+            <div class="sub">Digite seu código para entrar</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <label>Código</label>
+      <div class="row2">
+        <input class="input" id="authCodeInput" placeholder="Ex.: ADM" autocomplete="one-time-code" />
+        <button class="btn primary" id="authBtnEnter">Entrar</button>
+      </div>
+
+      <div class="err" id="authErr">Código inválido.</div>
+    </div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <img src="logo.png" class="logo-img" alt="Logo Pastoral Escolar">
+      <div>
+        <div>Painel Pastoral Escolar</div>
+        <div class="sub" id="todayLabel">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="pill" id="periodPill">Período: —</div>
+      <button class="btn primary" onclick="openSection('config')">Config</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- PAINEL -->
+  <section class="section active" id="sec-painel">
+    <div class="grid">
+      <div class="card" id="painelMetaCard"></div>
+
+      <div class="card">
+        <h2>Atalhos rápidos</h2>
+        <div class="note">Atalhos do dia: acompanhamento, estudos bíblicos e agenda.</div>
+
+        <div class="list">
+          <div class="item">
+            <div>
+              <strong>Pessoas</strong>
+              <div><small>Alunos • Famílias • Funcionários — com acompanhamento por etapa.</small></div>
+            </div>
+            <button class="btn" onclick="openSection('pessoas')">Abrir</button>
+          </div>
+
+          <div class="item">
+            <div>
+              <strong>Relatório Diário</strong>
+              <div><small>Preenchimento manual (resumo do dia na pastoral escolar).</small></div>
+            </div>
+            <button class="btn" onclick="openSection('relatorios')">Abrir</button>
+          </div>
+
+          <div class="item">
+            <div>
+              <strong>Backup</strong>
+              <div><small>Exportar/Importar JSON (recomendado semanalmente).</small></div>
+            </div>
+            <button class="btn" onclick="openSection('config')">Abrir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="section" id="sec-agenda">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <h2>Agenda</h2>
+          <div class="note">Dia com horários: eventos + registros + próximas ações das pessoas.</div>
+        </div>
+        <div class="row">
+          <input class="input" type="date" id="agendaDay" style="max-width:220px;" onchange="renderAgenda()" />
+          <button class="btn primary" onclick="openQuickRegister('evento')">+ Evento</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- Calendário mensal -->
+      <div class="card" style="padding:12px; margin-top:12px;">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <div>
+            <h2 style="margin:0;">Calendário</h2>
+            <div class="note">Toque em um dia para ver a agenda desse dia.</div>
+          </div>
+
+          <div class="row">
+            <button class="btn" onclick="calPrevMonth()">‹</button>
+            <div class="pill" id="calLabel">—</div>
+            <button class="btn" onclick="calNextMonth()">›</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div id="calGrid" class="calgrid"></div>
+      </div>
+
+      <div class="two">
+        <div>
+          <h2>Timeline do dia</h2>
+          <div class="note">Tudo ordenado por horário.</div>
+          <div class="list" id="agendaTimeline"></div>
+        </div>
+        <div>
+          <h2>Próximas ações</h2>
+          <div class="note">Pendências para não “perder pessoas no caminho”.</div>
+          <div class="list" id="agendaNextActions"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PESSOAS -->
+  <section class="section" id="sec-pessoas">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <h2>Pessoas</h2>
+          <div class="note">Separação por grupo. Dentro de cada grupo, acompanhamento por etapa.</div>
+        </div>
+        <button class="btn primary" onclick="openPersonModal()">+ Nova pessoa</button>
+      </div>
+
+      <div class="subtabs" id="peopleTypeTabs">
+        <div class="subtab active" data-type="Aluno" onclick="setPeopleType('Aluno')">Alunos</div>
+        <div class="subtab" data-type="Família" onclick="setPeopleType('Família')">Famílias</div>
+        <div class="subtab" data-type="Funcionário" onclick="setPeopleType('Funcionário')">Funcionários</div>
+      </div>
+
+      <div class="two" style="margin-top:10px;">
+        <div>
+          <label>Buscar</label>
+          <input class="input" id="peopleSearch" placeholder="Nome, tag, etapa..." oninput="renderPeople()" />
+        </div>
+        <div>
+          <label>Filtro por etapa</label>
+          <select id="peopleStageFilter" onchange="renderPeople()">
+            <option value="all">Todas as etapas</option>
+            <option value="Contato">Contato</option>
+            <option value="Acompanhamento">Acompanhamento</option>
+            <option value="Estudo bíblico iniciado">Estudo bíblico iniciado</option>
+            <option value="Estudo bíblico em andamento">Estudo bíblico em andamento</option>
+            <option value="Em decisão">Em decisão</option>
+            <option value="Em preparação">Em preparação</option>
+            <option value="Batizado">Batizado</option>
+            <option value="Pós-batismo">Pós-batismo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="list" id="peopleList"></div>
+    </div>
+  </section>
+
+  <!-- REGISTRAR -->
+  <section class="section" id="sec-registrar">
+    <div class="card">
+      <h2>Registrar</h2>
+      <div class="note">Registros próprios da pastoral escolar (sem misturar).</div>
+
+      <div class="cardgrid">
+        <div class="actioncard" onclick="openQuickRegister('classe')">
+          <h3>Registrar Estudo Bíblico</h3>
+          <p>Vincule a pessoa (opcional) e avance a etapa, se fizer sentido.</p>
+        </div>
+        <div class="actioncard" onclick="openQuickRegister('atendimento')">
+          <h3>Registrar Atendimento Pastoral</h3>
+          <p>Conversa, aconselhamento, crise, acompanhamento.</p>
+        </div>
+        <div class="actioncard" onclick="openQuickRegister('capela')">
+          <h3>Registrar Capela/Aula Espiritual</h3>
+          <p>Registro de ministração coletiva com data/horário.</p>
+        </div>
+        <div class="actioncard" onclick="openQuickRegister('batismo')">
+          <h3>Registrar Batismo</h3>
+          <p>Marque batismos e (se quiser) vincule à pessoa.</p>
+        </div>
+        <div class="actioncard" onclick="openQuickRegister('evento')">
+          <h3>Registrar Evento</h3>
+          <p>Reuniões, encontros, visitas agendadas, etc.</p>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Registros recentes (hoje)</h2>
+      <div class="note">Somente conferência rápida (não é relatório).</div>
+      <div class="list" id="todayActs"></div>
+    </div>
+  </section>
+
+  <!-- RELATÓRIOS -->
+  <section class="section" id="sec-relatorios">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <h2>Relatórios</h2>
+          <div class="note">Diário (manual) • Semanal (Dom→Sáb) • Total (período).</div>
+        </div>
+        <button class="btn" onclick="window.print()">Imprimir/PDF</button>
+      </div>
+
+      <div class="subtabs" id="reportTabs">
+        <div class="subtab active" data-rsec="diario" onclick="setReportSection('diario')">Diário</div>
+        <div class="subtab" data-rsec="semanal" onclick="setReportSection('semanal')">Semanal</div>
+        <div class="subtab" data-rsec="total" onclick="setReportSection('total')">Total</div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- Diário -->
+      <div id="report-diario" class="reportSubSection">
+        <div class="two">
+          <div>
+            <label>Selecionar dia</label>
+            <input class="input" type="date" id="reportDay" onchange="renderDailyReport()" />
+            <div class="note" style="margin-top:8px;">
+              Preencha manualmente o resumo do dia (padrão pastoral escolar).
+            </div>
+          </div>
+          <div class="right" style="align-items:flex-end;">
+            <button class="btn" onclick="clearDailyReport()">Limpar dia</button>
+            <button class="btn good" onclick="saveDailyReport()">Salvar dia</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div id="dailyForm"></div>
+      </div>
+
+      <!-- Semanal -->
+      <div id="report-semanal" class="reportSubSection" style="display:none;">
+        <label>Semana (Domingo → Sábado)</label>
+        <select id="weekSelect" onchange="renderWeeklyReport()"></select>
+        <div class="hr"></div>
+        <div id="weeklyReportBox"></div>
+      </div>
+
+      <!-- Total -->
+      <div id="report-total" class="reportSubSection" style="display:none;">
+        <div class="note">Soma do período configurado. Se vazio, soma tudo o que estiver preenchido.</div>
+        <div class="hr"></div>
+        <div id="totalReportBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESTATÍSTICAS -->
+  <section class="section" id="sec-stats">
+    <div class="card">
+      <h2>Estatísticas</h2>
+      <div class="note">Gráficos baseados nos dados do app (relatórios manuais + etapas das pessoas + registros).</div>
+
+      <div class="two">
+        <div class="card" style="padding:12px;">
+          <h2>Estudos bíblicos (relatório diário) — 14 dias</h2>
+          <canvas id="chartClasses" width="900" height="260"></canvas>
+        </div>
+        <div class="card" style="padding:12px;">
+          <h2>Atendimentos pastorais (relatório diário) — 14 dias</h2>
+          <canvas id="chartCare" width="900" height="260"></canvas>
+        </div>
+      </div>
+
+      <div class="two" style="margin-top:12px;">
+        <div class="card" style="padding:12px;">
+          <h2>Funil (etapas) — Pessoas</h2>
+          <div class="list" id="funnelBox"></div>
+        </div>
+        <div class="card" style="padding:12px;">
+          <h2>Meta: estudo bíblico/batismo</h2>
+          <div class="list" id="rateBox"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section class="section" id="sec-config">
+    <div class="card">
+      <h2>Configurações</h2>
+      <div class="note">Defina período e metas. Semana do relatório: Domingo → Sábado.</div>
+
+      <div class="two">
+        <div>
+          <label>Data de início</label>
+          <input class="input" type="date" id="cfgStart" />
+        </div>
+        <div>
+          <label>Data de término</label>
+          <input class="input" type="date" id="cfgEnd" />
+        </div>
+      </div>
+
+      <div class="two">
+        <div>
+          <label>Metas (Painel + Progresso)</label>
+          <select id="cfgGoals">
+            <option value="on">Ligado</option>
+            <option value="off">Desligado</option>
+          </select>
+          <div class="note" style="margin-top:6px;">Se desligar, o Painel fica “limpo” (sem meta/progresso).</div>
+        </div>
+        <div>
+          <label>—</label>
+          <div class="note">Dica: metas OFF não afeta relatórios, agenda, pessoas, registros e estatísticas.</div>
+        </div>
+      </div>
+
+      <div class="two">
+        <div>
+          <label>Meta de batismos (no período)</label>
+          <input class="input" type="number" min="0" id="cfgBaptisms" placeholder="Ex.: 6" />
+        </div>
+        <div>
+          <label>Taxa (estudos bíblicos por 1 batismo)</label>
+          <input class="input" type="number" min="1" id="cfgRatio" placeholder="Ex.: 4" />
+        </div>
+      </div>
+
+      <div class="two">
+        <div>
+          <label>Meta diária de atendimentos</label>
+          <input class="input" type="number" min="0" id="cfgCareDaily" placeholder="Ex.: 2" />
+        </div>
+        <div>
+          <label>Meta diária de estudos bíblicos</label>
+          <input class="input" type="number" min="0" id="cfgClassesDaily" placeholder="Ex.: 1" />
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="right">
+        <button class="btn danger" onclick="resetAll()">Zerar tudo</button>
+        <button class="btn primary" onclick="saveConfig()">Salvar config</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Backup</h2>
+      <div class="note">Exportar/Importar JSON (no mínimo semanalmente).</div>
+      <div class="row">
+        <button class="btn" onclick="exportData()">Exportar</button>
+        <button class="btn" onclick="triggerImport()">Importar</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)"/>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Mobile bottom nav -->
+<nav class="bottomnav" aria-label="Navegação">
+  <div class="bottomnav-inner">
+
+    <button class="navbtn active" data-sec="painel" onclick="openSection('painel')">
+      <div class="navicon"><img src="icons/painel.svg" alt=""></div>
+      <div class="navlabel">Painel</div>
+    </button>
+
+    <button class="navbtn" data-sec="agenda" onclick="openSection('agenda')">
+      <div class="navicon"><img src="icons/agenda.svg" alt=""></div>
+      <div class="navlabel">Agenda</div>
+    </button>
+
+    <button class="navbtn" data-sec="pessoas" onclick="openSection('pessoas')">
+      <div class="navicon"><img src="icons/pessoas.svg" alt=""></div>
+      <div class="navlabel">Pessoas</div>
+    </button>
+
+    <button class="navbtn" data-sec="registrar" onclick="openSection('registrar')">
+      <div class="navicon"><img src="icons/registrar.svg" alt=""></div>
+      <div class="navlabel">Registrar</div>
+    </button>
+
+    <button class="navbtn" data-sec="relatorios" onclick="openSection('relatorios')">
+      <div class="navicon"><img src="icons/relatorios.svg" alt=""></div>
+      <div class="navlabel">Relatórios</div>
+    </button>
+
+    <button class="navbtn" data-sec="stats" onclick="openSection('stats')">
+      <div class="navicon"><img src="icons/estatisticas.svg" alt=""></div>
+      <div class="navlabel">Estatísticas</div>
+    </button>
+
+    <button class="navbtn" data-sec="config" onclick="openSection('config')">
+      <div class="navicon"><img src="icons/config.svg" alt=""></div>
+      <div class="navlabel">Config</div>
+    </button>
+
+  </div>
+</nav>
+
+<!-- Modal -->
+<div id="modal">
+  <div id="modalOverlay" onclick="closeModal()"></div>
+  <div id="modalWrap">
+    <div class="card" id="modalBox"></div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Storage + Helpers
+========================= */
+const KEY = "pastoral_escolar_v1";
+
+/* =========================
+   Acesso por código (Gate)
+========================= */
+const AUTH = {
+  storage: sessionStorage,
+  key: "pastoral_escolar_access_code",
+  allowedCodes: [
+    "ADM",
+    "252321",
+    "V3RON5002",
+    "20102004",
+    "0803",
+    "214500",
+    "aaaaaaaaaaaaaaaaaaaaaaaaa"
+  ]
+};
+
+function normalizeCode(s){
+  return (s || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+const ALLOWED = new Set(AUTH.allowedCodes.map(normalizeCode));
+
+function isAuthorized(){
+  const saved = normalizeCode(AUTH.storage.getItem(AUTH.key));
+  return !!saved && ALLOWED.has(saved);
+}
+
+function showAuthGate(){
+  const gate = document.getElementById("authGate");
+  const input = document.getElementById("authCodeInput");
+  const err = document.getElementById("authErr");
+  const btn = document.getElementById("authBtnEnter");
+
+  gate.classList.add("show");
+  gate.setAttribute("aria-hidden","false");
+  err.style.display = "none";
+
+  const tryEnter = () => {
+    const code = normalizeCode(input.value);
+    if(ALLOWED.has(code)){
+      AUTH.storage.setItem(AUTH.key, code);
+      gate.classList.remove("show");
+      gate.setAttribute("aria-hidden","true");
+      err.style.display = "none";
+      boot();
+    }else{
+      err.style.display = "block";
+    }
+  };
+
+  btn.onclick = tryEnter;
+  input.onkeydown = (e) => { if(e.key === "Enter") tryEnter(); };
+  setTimeout(()=> input.focus(), 50);
+}
+
+function logout(){
+  AUTH.storage.removeItem(AUTH.key);
+  location.reload();
+}
+
+/* Etapas (pipeline) — Pastoral Escolar */
+const STAGES = [
+  "Contato",
+  "Acompanhamento",
+  "Estudo bíblico iniciado",
+  "Estudo bíblico em andamento",
+  "Em decisão",
+  "Em preparação",
+  "Batizado",
+  "Pós-batismo"
+];
+
+const todayISO = () => new Date().toISOString().slice(0,10);
+const nowHM = () => new Date().toTimeString().slice(0,5);
+const clamp0 = (n) => Math.max(0, Number(n||0));
+const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+let CAL_MONTH = (new Date().getMonth());
+let CAL_YEAR  = (new Date().getFullYear());
+
+function load(){
+  const raw = localStorage.getItem(KEY);
+  if(raw){
+    try { return JSON.parse(raw); } catch(e){}
+  }
+  return {
+    config:{
+      start: "",
+      end: "",
+      goals: "on",
+      baptismsTarget: 0,
+      ratioClassesPerBaptism: 4,
+      careDaily: 2,
+      classesDaily: 1
+    },
+    people: [],
+    activities: [],
+    reportsDaily: {}
+  };
+}
+
+function save(db){ localStorage.setItem(KEY, JSON.stringify(db)); }
+let DB = load();
+
+/* migração leve */
+(function migrate(){
+  if(!DB.config) DB.config = {};
+  if(!("goals" in DB.config)) DB.config.goals = "on";
+  if(!("baptismsTarget" in DB.config)) DB.config.baptismsTarget = 0;
+  if(!("ratioClassesPerBaptism" in DB.config)) DB.config.ratioClassesPerBaptism = 4;
+  if(!("careDaily" in DB.config)) DB.config.careDaily = 2;
+  if(!("classesDaily" in DB.config)) DB.config.classesDaily = 1;
+
+  if(Array.isArray(DB.people)){
+    DB.people.forEach(p=>{
+      if(!("statusABC" in p)) p.statusABC = "";
+      if(!("type" in p)) p.type = "Aluno";
+      if(!("stage" in p)) p.stage = "Contato";
+    });
+  }
+  save(DB);
+})();
+
+function escapeHtml(s){
+  return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+function format1(n){
+  const x = Number(n||0);
+  if(!isFinite(x)) return "0";
+  return (Math.round(x*10)/10).toString();
+}
+function pct(done, target){
+  const t = Number(target||0);
+  if(t<=0) return 0;
+  return Math.min(100, Math.round((done/t)*100));
+}
+function addDays(iso, days){
+  const d = new Date(iso+"T00:00:00");
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+function dow(iso){
+  const d = new Date(iso+"T00:00:00");
+  return d.getDay();
+}
+function startOfWeekSun(iso){
+  const diff = dow(iso);
+  return addDays(iso, -diff);
+}
+function endOfWeekSat(iso){
+  const diff = 6 - dow(iso);
+  return addDays(iso, diff);
+}
+function inRange(date, start, end){
+  if(start && date < start) return false;
+  if(end && date > end) return false;
+  return true;
+}
+
+/* =========================
+   Calendar (Agenda)
+========================= */
+function countItemsByDate(){
+  const map = {};
+  for(const a of DB.activities){
+    map[a.date] = (map[a.date]||0) + 1;
+  }
+  return map;
+}
+
+function renderCalendar(){
+  const label = document.getElementById("calLabel");
+  const grid  = document.getElementById("calGrid");
+  if(!label || !grid) return;
+
+  const monthNames = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  label.textContent = `${monthNames[CAL_MONTH]} ${CAL_YEAR}`;
+
+  const counts = countItemsByDate();
+  const dows = ["D","S","T","Q","Q","S","S"];
+  let html = dows.map(d=>`<div class="calDow">${d}</div>`).join("");
+
+  const first = new Date(CAL_YEAR, CAL_MONTH, 1);
+  const firstDow = first.getDay();
+  const daysInMonth = new Date(CAL_YEAR, CAL_MONTH+1, 0).getDate();
+
+  const prevDays = firstDow;
+  const prevLastDay = new Date(CAL_YEAR, CAL_MONTH, 0).getDate();
+
+  const selected = document.getElementById("agendaDay")?.value || todayISO();
+
+  for(let i=prevDays; i>0; i--){
+    const dayNum = prevLastDay - i + 1;
+    const d = new Date(CAL_YEAR, CAL_MONTH-1, dayNum);
+    const iso = d.toISOString().slice(0,10);
+    const c = counts[iso] || 0;
+    html += `
+      <div class="calDay muted" onclick="setAgendaDay('${iso}')">
+        <div class="calTop"><div>${dayNum}</div>${c?`<div class="calCount">${c}</div>`:""}</div>
+      </div>
+    `;
+  }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(CAL_YEAR, CAL_MONTH, day);
+    const iso = d.toISOString().slice(0,10);
+    const c = counts[iso] || 0;
+    const isActive = (iso === selected) ? "active" : "";
+    html += `
+      <div class="calDay ${isActive}" onclick="setAgendaDay('${iso}')">
+        <div class="calTop"><div>${day}</div>${c?`<div class="calCount">${c}</div>`:""}</div>
+      </div>
+    `;
+  }
+
+  const totalCells = (prevDays + daysInMonth);
+  const trailing = (7 - (totalCells % 7)) % 7;
+  for(let day=1; day<=trailing; day++){
+    const d = new Date(CAL_YEAR, CAL_MONTH+1, day);
+    const iso = d.toISOString().slice(0,10);
+    const c = counts[iso] || 0;
+    html += `
+      <div class="calDay muted" onclick="setAgendaDay('${iso}')">
+        <div class="calTop"><div>${day}</div>${c?`<div class="calCount">${c}</div>`:""}</div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+}
+
+function setAgendaDay(iso){
+  const dayInput = document.getElementById("agendaDay");
+  if(dayInput) dayInput.value = iso;
+  renderAgenda();
+  renderCalendar();
+}
+function calPrevMonth(){
+  CAL_MONTH--;
+  if(CAL_MONTH < 0){ CAL_MONTH = 11; CAL_YEAR--; }
+  renderCalendar();
+}
+function calNextMonth(){
+  CAL_MONTH++;
+  if(CAL_MONTH > 11){ CAL_MONTH = 0; CAL_YEAR++; }
+  renderCalendar();
+}
+
+/* =========================
+   UI Navigation
+========================= */
+function openSection(sec){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("sec-"+sec).classList.add("active");
+
+  document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active", b.dataset.sec===sec));
+
+  if(sec==="painel") renderPainel();
+  if(sec==="agenda") renderAgenda();
+  if(sec==="pessoas") renderPeople();
+  if(sec==="registrar") renderTodayActs();
+  if(sec==="relatorios") renderReports();
+  if(sec==="stats") renderStats();
+  if(sec==="config") renderConfig();
+}
+
+/* =========================
+   Topbar
+========================= */
+function renderTop(){
+  const d = new Date();
+  const pt = d.toLocaleDateString("pt-BR", { weekday:"long", year:"numeric", month:"2-digit", day:"2-digit" });
+  document.getElementById("todayLabel").textContent = pt;
+
+  const start = DB.config.start || "—";
+  const end = DB.config.end || "—";
+  document.getElementById("periodPill").textContent = `Período: ${start} → ${end}`;
+}
+
+/* =========================
+   Config
+========================= */
+function renderConfig(){
+  document.getElementById("cfgStart").value = DB.config.start || "";
+  document.getElementById("cfgEnd").value = DB.config.end || "";
+  document.getElementById("cfgGoals").value = DB.config.goals || "on";
+  document.getElementById("cfgBaptisms").value = DB.config.baptismsTarget || 0;
+  document.getElementById("cfgRatio").value = DB.config.ratioClassesPerBaptism || 4;
+  document.getElementById("cfgCareDaily").value = DB.config.careDaily ?? 2;
+  document.getElementById("cfgClassesDaily").value = DB.config.classesDaily ?? 1;
+}
+function saveConfig(){
+  DB.config.start = document.getElementById("cfgStart").value;
+  DB.config.end = document.getElementById("cfgEnd").value;
+  DB.config.goals = document.getElementById("cfgGoals").value;
+  DB.config.baptismsTarget = clamp0(document.getElementById("cfgBaptisms").value);
+  DB.config.ratioClassesPerBaptism = Math.max(1, clamp0(document.getElementById("cfgRatio").value || 4));
+  DB.config.careDaily = clamp0(document.getElementById("cfgCareDaily").value);
+  DB.config.classesDaily = clamp0(document.getElementById("cfgClassesDaily").value);
+
+  save(DB);
+  renderTop();
+  openSection("painel");
+}
+function resetAll(){
+  if(!confirm("Isso apaga tudo (pessoas, registros, relatórios). Continuar?")) return;
+  localStorage.removeItem(KEY);
+  DB = load();
+  renderTop();
+  openSection("config");
+}
+function enableGoalsQuick(){
+  DB.config.goals = "on";
+  save(DB);
+  renderPainel();
+}
+
+/* =========================
+   People
+========================= */
+let PEOPLE_TYPE = "Aluno";
+function setPeopleType(type){
+  PEOPLE_TYPE = type;
+  document.querySelectorAll("#peopleTypeTabs .subtab").forEach(t=>t.classList.toggle("active", t.dataset.type===type));
+  renderPeople();
+}
+function getPerson(id){ return DB.people.find(p=>p.id===id); }
+
+function abcLabel(v){
+  if(v==="A") return "A — alta chance (sem impedimento)";
+  if(v==="B") return "B — interessado, mas com pendência";
+  if(v==="C") return "C — difícil (longo prazo)";
+  return "—";
+}
+
+function openPersonModal(person){
+  const isEdit = !!person;
+  const p = person || {
+    id: uid(),
+    name: "",
+    type: PEOPLE_TYPE || "Aluno",
+    stage: "Contato",
+    statusABC: "",
+    tags: "",
+    nextAction: "",
+    nextDate: "",
+    phone: "",
+    notes: ""
+  };
+
+  const box = document.getElementById("modalBox");
+
+  const statusField = `
+    <div id="abcWrap" style="display:${p.type==="Aluno" ? "block" : "none"};">
+      <label>Status (A/B/C) — somente Alunos</label>
+      <select id="pABC">
+        <option value="" ${p.statusABC===""?"selected":""}>(Sem status)</option>
+        <option value="A" ${p.statusABC==="A"?"selected":""}>A (alta chance)</option>
+        <option value="B" ${p.statusABC==="B"?"selected":""}>B (pendência)</option>
+        <option value="C" ${p.statusABC==="C"?"selected":""}>C (longo prazo)</option>
+      </select>
+      <div class="note" style="margin-top:6px;">Dica: A = prioridade • B = remover impedimento • C = acompanhamento longo.</div>
+    </div>
+  `;
+
+  box.innerHTML = `
+    <h2>${isEdit ? "Editar pessoa" : "Nova pessoa"}</h2>
+
+    <div class="two">
+      <div>
+        <label>Nome</label>
+        <input class="input" id="pName" value="${escapeHtml(p.name)}" placeholder="Nome completo"/>
+      </div>
+      <div>
+        <label>Grupo</label>
+        <select id="pType" onchange="toggleABCField()">
+          ${["Aluno","Família","Funcionário"].map(t=>`<option ${p.type===t?"selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+
+    ${statusField}
+
+    <label>Etapa (andamento)</label>
+    <select id="pStage">
+      ${STAGES.map(s=>`<option ${p.stage===s?"selected":""}>${s}</option>`).join("")}
+    </select>
+
+    <div class="two">
+      <div>
+        <label>Tags (vírgula)</label>
+        <input class="input" id="pTags" value="${escapeHtml(p.tags)}" placeholder="série, turma, pais, crise, decisão..."/>
+      </div>
+      <div>
+        <label>Contato (opcional)</label>
+        <input class="input" id="pPhone" value="${escapeHtml(p.phone||"")}" placeholder="Telefone / WhatsApp / e-mail"/>
+      </div>
+    </div>
+
+    <label>Próxima ação</label>
+    <input class="input" id="pNext" value="${escapeHtml(p.nextAction)}" placeholder="Acompanhar, chamar pais, marcar estudo bíblico, oração..."/>
+
+    <div class="two">
+      <div>
+        <label>Data da próxima ação (opcional)</label>
+        <input class="input" id="pNextDate" type="date" value="${p.nextDate||""}"/>
+      </div>
+      <div>
+        <label>Anotações</label>
+        <input class="input" id="pNotes" value="${escapeHtml(p.notes||"")}" placeholder="Observações rápidas..."/>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="right">
+      ${isEdit ? `<button class="btn danger" onclick="deletePerson('${p.id}')">Excluir</button>` : ""}
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn good" onclick="savePerson('${p.id}')">Salvar</button>
+    </div>
+  `;
+  showModal();
+}
+
+function toggleABCField(){
+  const t = document.getElementById("pType").value;
+  const wrap = document.getElementById("abcWrap");
+  if(!wrap) return;
+  wrap.style.display = (t==="Aluno") ? "block" : "none";
+  if(t!=="Aluno"){
+    const sel = document.getElementById("pABC");
+    if(sel) sel.value = "";
+  }
+}
+
+function savePerson(id){
+  const name = document.getElementById("pName").value.trim();
+  if(!name){ alert("Informe o nome."); return; }
+
+  const type = document.getElementById("pType").value;
+  const statusABC = (type==="Aluno") ? (document.getElementById("pABC")?.value || "") : "";
+
+  const obj = {
+    id,
+    name,
+    type,
+    stage: document.getElementById("pStage").value,
+    statusABC,
+    tags: document.getElementById("pTags").value.trim(),
+    phone: document.getElementById("pPhone").value.trim(),
+    nextAction: document.getElementById("pNext").value.trim(),
+    nextDate: document.getElementById("pNextDate").value,
+    notes: document.getElementById("pNotes").value.trim()
+  };
+
+  const idx = DB.people.findIndex(p=>p.id===id);
+  if(idx>=0) DB.people[idx]=obj;
+  else DB.people.unshift(obj);
+
+  save(DB);
+  closeModal();
+  renderPeople();
+  renderAgenda();
+  renderPainel();
+}
+function deletePerson(id){
+  if(!confirm("Excluir pessoa?")) return;
+  DB.people = DB.people.filter(p=>p.id!==id);
+  save(DB);
+  closeModal();
+  renderPeople();
+  renderAgenda();
+  renderPainel();
+}
+
+function renderPeople(){
+  const q = (document.getElementById("peopleSearch")?.value||"").toLowerCase();
+  const stageFilter = document.getElementById("peopleStageFilter")?.value || "all";
+
+  let arr = DB.people.filter(p=>p.type===PEOPLE_TYPE);
+
+  if(stageFilter !== "all"){
+    arr = arr.filter(p=>p.stage===stageFilter);
+  }
+
+  if(q){
+    arr = arr.filter(p=>{
+      const blob = (p.name+" "+p.stage+" "+(p.tags||"")+" "+(p.nextAction||"")+" "+(p.statusABC||"")).toLowerCase();
+      return blob.includes(q);
+    });
+  }
+
+  const list = document.getElementById("peopleList");
+  if(!arr.length){
+    list.innerHTML = `<div class="note">Nenhuma pessoa neste grupo. Clique em “+ Nova pessoa”.</div>`;
+    return;
+  }
+
+  list.innerHTML = arr.map(p=>{
+    const dot = p.stage==="Batizado" ? "ok" : (p.stage==="Em preparação" || p.stage==="Em decisão") ? "warn" : "";
+    const next = p.nextAction ? `• Próx: ${escapeHtml(p.nextAction)}${p.nextDate?` (${p.nextDate})`:""}` : "• Sem próxima ação";
+    const tags = (p.tags||"").split(",").map(t=>t.trim()).filter(Boolean);
+
+    const abc = (p.type==="Aluno" && p.statusABC) ? `
+      <span class="badge abcBadge ${p.statusABC}" title="${escapeHtml(abcLabel(p.statusABC))}">
+        <span class="abcDot ${p.statusABC}"></span>
+        ${p.statusABC}
+      </span>
+    ` : "";
+
+    const quickBtns = p.type==="Funcionário"
+      ? `<button class="btn good" onclick="openQuickRegister('atendimento','${p.id}')">+ Atendimento</button>`
+      : `
+        <button class="btn good" onclick="openQuickRegister('classe','${p.id}')">+ Estudo bíblico</button>
+        <button class="btn good" onclick="openQuickRegister('atendimento','${p.id}')">+ Atendimento</button>
+      `;
+
+    return `
+      <div class="item">
+        <div>
+          <strong>${escapeHtml(p.name)}</strong>
+          <div><small>${escapeHtml(p.stage)} ${next}</small></div>
+          <div class="meta">
+            ${abc}
+            <span class="badge"><span class="dot ${dot}"></span>${escapeHtml(p.stage)}</span>
+            ${tags.slice(0,4).map(t=>`<span class="badge">${escapeHtml(t)}</span>`).join("")}
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <button class="btn" onclick="openPersonModal(getPerson('${p.id}'))">Editar</button>
+          ${quickBtns}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* =========================
+   Activities (Registros)
+========================= */
+function openQuickRegister(type, personId=""){
+  openSection("registrar");
+  buildRegisterModal(type, personId);
+}
+function personSelectHtml(selectedId=""){
+  const opts = [`<option value="">(Selecione)</option>`]
+    .concat(DB.people.map(p=>`<option value="${p.id}" ${p.id===selectedId?"selected":""}>${escapeHtml(p.name)} — ${escapeHtml(p.type)}</option>`));
+  return `<select id="actPerson">${opts.join("")}</select>`;
+}
+
+function buildRegisterModal(type, personId=""){
+  const date = todayISO();
+  const time = nowHM();
+  const box = document.getElementById("modalBox");
+
+  if(type==="classe"){
+    box.innerHTML = `
+      <h2>Registrar Estudo Bíblico</h2>
+      <div class="two">
+        <div>
+          <label>Pessoa (opcional)</label>
+          ${personSelectHtml(personId)}
+        </div>
+        <div>
+          <label>Hora</label>
+          <input class="input" id="actTime" value="${time}" />
+        </div>
+      </div>
+      <div class="two">
+        <div>
+          <label>Data</label>
+          <input class="input" id="actDate" type="date" value="${date}"/>
+        </div>
+        <div>
+          <label>Avançar etapa? (opcional)</label>
+          <select id="actAdvance">
+            <option value="">Não mexer</option>
+            ${STAGES.map(s=>`<option value="${s}">${s}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <label>Tema/Lição (opcional)</label>
+      <input class="input" id="actTopic" placeholder="Ex.: O Sábado, Salvação, Daniel 2..." />
+      <label>Observações (opcional)</label>
+      <input class="input" id="actNote" placeholder="Dúvidas, decisão, presença..." />
+      <div class="hr"></div>
+      <div class="right">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn good" onclick="saveActivity('classe')">Salvar</button>
+      </div>
+    `;
+  }
+  else if(type==="atendimento"){
+    box.innerHTML = `
+      <h2>Registrar Atendimento Pastoral</h2>
+      <div class="two">
+        <div>
+          <label>Pessoa (recomendado)</label>
+          ${personSelectHtml(personId)}
+        </div>
+        <div>
+          <label>Hora</label>
+          <input class="input" id="actTime" value="${time}" />
+        </div>
+      </div>
+      <div class="two">
+        <div>
+          <label>Data</label>
+          <input class="input" id="actDate" type="date" value="${date}"/>
+        </div>
+        <div>
+          <label>Duração (min) (opcional)</label>
+          <input class="input" id="actMin" type="number" min="0" placeholder="Ex.: 30" />
+        </div>
+      </div>
+      <label>Tipo (opcional)</label>
+      <select id="actKind">
+        <option value="acompanhamento">Acompanhamento</option>
+        <option value="crise">Crise</option>
+        <option value="familia">Família</option>
+        <option value="orientacao">Orientação</option>
+        <option value="espiritual">Espiritual</option>
+        <option value="outro">Outro</option>
+      </select>
+      <label>Observações (opcional)</label>
+      <input class="input" id="actNote" placeholder="O que foi combinado? Próxima ação?" />
+      <div class="hr"></div>
+      <div class="right">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn good" onclick="saveActivity('atendimento')">Salvar</button>
+      </div>
+    `;
+  }
+  else if(type==="capela"){
+    box.innerHTML = `
+      <h2>Registrar Capela/Aula</h2>
+      <div class="two">
+        <div>
+          <label>Data</label>
+          <input class="input" id="actDate" type="date" value="${date}"/>
+        </div>
+        <div>
+          <label>Hora</label>
+          <input class="input" id="actTime" value="${time}" />
+        </div>
+      </div>
+      <label>Tema</label>
+      <input class="input" id="actTopic" placeholder="Tema da capela/aula" />
+      <label>Público/Local (opcional)</label>
+      <input class="input" id="actPlace" placeholder="Turma, auditório, pátio..." />
+      <div class="hr"></div>
+      <div class="right">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn good" onclick="saveActivity('capela')">Salvar</button>
+      </div>
+    `;
+  }
+  else if(type==="batismo"){
+    box.innerHTML = `
+      <h2>Registrar Batismo</h2>
+      <div class="two">
+        <div>
+          <label>Pessoa (opcional)</label>
+          ${personSelectHtml(personId)}
+        </div>
+        <div>
+          <label>Data</label>
+          <input class="input" id="actDate" type="date" value="${date}"/>
+        </div>
+      </div>
+      <label>Local (opcional)</label>
+      <input class="input" id="actPlace" placeholder="Igreja / distrito" />
+      <label>Observação (opcional)</label>
+      <input class="input" id="actNote" placeholder="Detalhes..." />
+      <div class="hr"></div>
+      <div class="right">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn good" onclick="saveActivity('batismo')">Salvar</button>
+      </div>
+    `;
+  }
+  else if(type==="evento"){
+    box.innerHTML = `
+      <h2>Registrar Evento</h2>
+      <div class="two">
+        <div>
+          <label>Data</label>
+          <input class="input" id="actDate" type="date" value="${date}"/>
+        </div>
+        <div>
+          <label>Hora</label>
+          <input class="input" id="actTime" value="${time}" />
+        </div>
+      </div>
+      <label>Título</label>
+      <input class="input" id="actTitle" placeholder="Ex.: reunião, encontro, visita agendada..." />
+      <label>Detalhes (opcional)</label>
+      <input class="input" id="actNote" placeholder="Local, observação..." />
+      <label>Vincular a pessoa (opcional)</label>
+      ${personSelectHtml(personId)}
+      <div class="hr"></div>
+      <div class="right">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn good" onclick="saveActivity('evento')">Salvar</button>
+      </div>
+    `;
+  }
+
+  showModal();
+}
+
+function saveActivity(type){
+  const base = {
+    id: uid(),
+    type,
+    date: (document.getElementById("actDate")?.value) || todayISO(),
+    time: (document.getElementById("actTime")?.value) || ""
+  };
+
+  let payload = {};
+  let personId = "";
+
+  if(["classe","atendimento","batismo","evento"].includes(type)){
+    personId = (document.getElementById("actPerson")?.value) || "";
+  }
+
+  if(type==="classe"){
+    payload.topic = (document.getElementById("actTopic")?.value||"").trim();
+    payload.note = (document.getElementById("actNote")?.value||"").trim();
+    payload.advance = (document.getElementById("actAdvance")?.value||"");
+
+    if(payload.advance && personId){
+      const p = getPerson(personId);
+      if(p){
+        p.stage = payload.advance;
+        if(!p.nextAction) p.nextAction = "Agendar próximo estudo bíblico";
+      }
+    }
+  }
+  else if(type==="atendimento"){
+    payload.minutes = clamp0(document.getElementById("actMin")?.value);
+    payload.kind = document.getElementById("actKind")?.value || "acompanhamento";
+    payload.note = (document.getElementById("actNote")?.value||"").trim();
+  }
+  else if(type==="capela"){
+    payload.topic = (document.getElementById("actTopic")?.value||"").trim();
+    payload.place = (document.getElementById("actPlace")?.value||"").trim();
+  }
+  else if(type==="batismo"){
+    payload.place = (document.getElementById("actPlace")?.value||"").trim();
+    payload.note = (document.getElementById("actNote")?.value||"").trim();
+    if(personId){
+      const p = getPerson(personId);
+      if(p) p.stage = "Batizado";
+    }
+  }
+  else if(type==="evento"){
+    payload.title = (document.getElementById("actTitle")?.value||"").trim();
+    payload.note = (document.getElementById("actNote")?.value||"").trim();
+    if(!payload.title){ alert("Dê um título para o evento."); return; }
+  }
+
+  DB.activities.unshift({ ...base, personId, payload });
+  save(DB);
+  closeModal();
+
+  renderTodayActs();
+  renderAgenda();
+  renderPainel();
+  if(document.getElementById("sec-stats").classList.contains("active")) renderStats();
+}
+
+function actTitle(a){
+  const p = a.personId ? getPerson(a.personId) : null;
+  const who = p ? ` — ${p.name}` : "";
+  if(a.type==="classe") return `Estudo Bíblico${who}${a.payload.topic?": "+a.payload.topic:""}`;
+  if(a.type==="atendimento") return `Atendimento Pastoral${who}`;
+  if(a.type==="capela") return `Capela/Aula${a.payload.topic?": "+a.payload.topic:""}`;
+  if(a.type==="batismo") return `Batismo${who}`;
+  if(a.type==="evento") return `Evento: ${a.payload.title}${who}`;
+  return a.type;
+}
+
+function renderTodayActs(){
+  const d = todayISO();
+  const acts = DB.activities.filter(a=>a.date===d).slice(0,10);
+  const box = document.getElementById("todayActs");
+  if(!acts.length){
+    box.innerHTML = `<div class="note">Nenhum registro hoje ainda.</div>`;
+    return;
+  }
+  box.innerHTML = acts.map(a=>`
+    <div class="item">
+      <div>
+        <strong>${escapeHtml(actTitle(a))}</strong>
+        <div><small>${a.date} ${a.time||""}</small></div>
+      </div>
+      <button class="btn danger" onclick="deleteAct('${a.id}')">Apagar</button>
+    </div>
+  `).join("");
+}
+function deleteAct(id){
+  if(!confirm("Apagar este registro?")) return;
+  DB.activities = DB.activities.filter(a=>a.id!==id);
+  save(DB);
+  renderTodayActs();
+  renderAgenda();
+  renderPainel();
+  if(document.getElementById("sec-stats").classList.contains("active")) renderStats();
+}
+
+/* =========================
+   Painel (metas) — goals ON/OFF
+========================= */
+function sumDailyReports(start=null, end=null){
+  const t = {
+    dev:0, prep:0, train:0, comm:0,
+    care:0, classes:0, chapels:0, baptisms:0
+  };
+  const keys = Object.keys(DB.reportsDaily || {}).sort();
+  for(const k of keys){
+    if(!inRange(k, start, end)) continue;
+    const d = DB.reportsDaily[k] || {};
+    t.dev += Number(d.dev||0);
+    t.prep += Number(d.prep||0);
+    t.train += Number(d.train||0);
+    t.comm += Number(d.comm||0);
+    t.care += Number(d.care||0);
+    t.classes += Number(d.classes||0);
+    t.chapels += Number(d.chapels||0);
+    t.baptisms += Number(d.baptisms||0);
+  }
+  return t;
+}
+
+function plannedStats(){
+  const cfg = DB.config;
+  const ratio = Math.max(1, Number(cfg.ratioClassesPerBaptism||4));
+  const baptTarget = clamp0(cfg.baptismsTarget);
+  const classesNeeded = baptTarget * ratio;
+
+  const start = cfg.start || null;
+  const end = cfg.end || null;
+
+  const total = (start && end) ? sumDailyReports(start, end) : sumDailyReports(null, null);
+
+  const today = todayISO();
+  let daysLeft = 0;
+  if(start && end){
+    const t = new Date(today+"T00:00:00");
+    const e = new Date(end+"T00:00:00");
+    daysLeft = Math.floor((e - t)/86400000)+1;
+    if(daysLeft < 0) daysLeft = 0;
+  }
+
+  const classesRemaining = Math.max(0, classesNeeded - total.classes);
+  const dailyClassesTarget = daysLeft>0 ? (classesRemaining / daysLeft) : classesRemaining;
+
+  const projectedBaptisms = ratio>0 ? (total.classes / ratio) : 0;
+
+  return {
+    ratio, baptTarget, classesNeeded,
+    classesDone: total.classes,
+    baptDone: total.baptisms,
+    classesRemaining,
+    dailyClassesTarget,
+    projectedBaptisms,
+    total
+  };
+}
+
+function renderPainel(){
+  renderTop();
+
+  const card = document.getElementById("painelMetaCard");
+
+  if(DB.config.goals !== "on"){
+    card.innerHTML = `
+      <h2>Painel</h2>
+      <div class="note">Metas desativadas. Você pode usar pessoas, registros, agenda e relatórios normalmente.</div>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:space-between;">
+        <span class="badge" title="Metas estão desligadas"><span class="dot warn"></span>Metas desativadas</span>
+        <button class="btn primary" onclick="enableGoalsQuick()">Ativar metas</button>
+      </div>
+      <div class="hr"></div>
+      <div class="right">
+        <button class="btn good" onclick="openQuickRegister('classe')">+ Estudo bíblico</button>
+        <button class="btn good" onclick="openQuickRegister('atendimento')">+ Atendimento</button>
+        <button class="btn" onclick="openQuickRegister('evento')">+ Evento</button>
+      </div>
+    `;
+    return;
+  }
+
+  const s = plannedStats();
+  const today = todayISO();
+  const dayReport = DB.reportsDaily[today] || {};
+
+  card.innerHTML = `
+    <h2>Meta & Progresso</h2>
+    <div class="note">Meta de batismos → estudos bíblicos necessários → quanto falta + ritmo sugerido.</div>
+
+    <div class="kpis" id="kpisPainel"></div>
+
+    <div class="hr"></div>
+    <div class="list" id="metaBoxes"></div>
+
+    <div class="hr"></div>
+    <div class="right">
+      <button class="btn good" onclick="openQuickRegister('classe')">+ Estudo Bíblico</button>
+      <button class="btn good" onclick="openQuickRegister('atendimento')">+ Atendimento</button>
+      <button class="btn" onclick="openQuickRegister('evento')">+ Evento</button>
+    </div>
+  `;
+
+  const k = document.getElementById("kpisPainel");
+  k.innerHTML = `
+    <div class="kpi">
+      <div class="t">Meta diária sugerida (estudos bíblicos)</div>
+      <div class="v">${format1(s.dailyClassesTarget)}</div>
+      <div class="s">Faltam ${s.classesRemaining} no período</div>
+    </div>
+    <div class="kpi">
+      <div class="t">Estudos Bíblicos (no período)</div>
+      <div class="v">${s.classesDone}/${s.classesNeeded}</div>
+      <div class="s">Projeção: ${format1(s.projectedBaptisms)} batismos</div>
+    </div>
+    <div class="kpi">
+      <div class="t">Batismos (no período)</div>
+      <div class="v">${s.baptDone}/${s.baptTarget}</div>
+      <div class="s">Taxa meta: ${s.ratio}:1</div>
+    </div>
+    <div class="kpi">
+      <div class="t">Hoje (relatório manual)</div>
+      <div class="v">${Number(dayReport.classes||0)} estudos bíblicos</div>
+      <div class="s">${Number(dayReport.care||0)} atendimentos • ${Number(dayReport.chapels||0)} capelas</div>
+    </div>
+  `;
+
+  const meta = document.getElementById("metaBoxes");
+  meta.innerHTML = `
+    <div class="item">
+      <div>
+        <strong>Batismos</strong>
+        <div><small>Meta: ${s.baptTarget} • Feitos: ${s.baptDone} • Faltam: ${Math.max(0, s.baptTarget - s.baptDone)}</small></div>
+      </div>
+      <span class="badge"><span class="dot ${s.baptDone>=s.baptTarget?'ok':'warn'}"></span>${pct(s.baptDone, s.baptTarget)}%</span>
+    </div>
+
+    <div class="item">
+      <div>
+        <strong>Estudos Bíblicos</strong>
+        <div><small>Meta (pela taxa): ${s.classesNeeded} • Feitas: ${s.classesDone} • Faltam: ${s.classesRemaining}</small></div>
+      </div>
+      <span class="badge"><span class="dot ${s.classesDone>=s.classesNeeded?'ok':'warn'}"></span>${pct(s.classesDone, s.classesNeeded)}%</span>
+    </div>
+
+    <div class="item">
+      <div>
+        <strong>Ritmo diário</strong>
+        <div><small>Atendimentos/dia: ${DB.config.careDaily||0} • Estudos bíblicos/dia: ${DB.config.classesDaily||0}</small></div>
+      </div>
+      <span class="badge"><span class="dot"></span>Alvos diários</span>
+    </div>
+  `;
+}
+
+/* =========================
+   Agenda
+========================= */
+function renderAgenda(){
+  renderTop();
+  const dayInput = document.getElementById("agendaDay");
+  if(!dayInput.value) dayInput.value = todayISO();
+  const d = dayInput.value;
+
+  const items = DB.activities
+    .filter(a=>a.date===d)
+    .map(a=>{
+      let title = actTitle(a);
+      let time = a.time || "—";
+      return { time, title, type: a.type };
+    })
+    .sort((a,b)=> (a.time||"").localeCompare(b.time||""));
+
+  const timeline = document.getElementById("agendaTimeline");
+  if(!items.length){
+    timeline.innerHTML = `<div class="note">Sem itens neste dia. Registre um evento/atendimento/estudo bíblico/capela.</div>`;
+  } else {
+    timeline.innerHTML = items.map(x=>`
+      <div class="item">
+        <div>
+          <strong>${escapeHtml(x.title)}</strong>
+          <div><small>${escapeHtml(x.time)}</small></div>
+        </div>
+        <span class="badge"><span class="dot"></span>${escapeHtml(x.type)}</span>
+      </div>
+    `).join("");
+  }
+
+  const next = DB.people
+    .filter(p=>p.nextAction)
+    .sort((a,b)=>{
+      const ad = a.nextDate || "9999-99-99";
+      const bd = b.nextDate || "9999-99-99";
+      return ad.localeCompare(bd);
+    })
+    .slice(0,12);
+
+  const nextBox = document.getElementById("agendaNextActions");
+  if(!next.length){
+    nextBox.innerHTML = `<div class="note">Nenhuma próxima ação cadastrada nas pessoas.</div>`;
+  } else {
+    nextBox.innerHTML = next.map(p=>`
+      <div class="item">
+        <div>
+          <strong>${escapeHtml(p.nextAction)}</strong>
+          <div><small>${p.nextDate ? escapeHtml(p.nextDate) : "Sem data"} • ${escapeHtml(p.name)} (${escapeHtml(p.type)})</small></div>
+        </div>
+        <button class="btn" onclick="openPersonModal(getPerson('${p.id}'))">Ver</button>
+      </div>
+    `).join("");
+  }
+
+  renderCalendar();
+}
+
+/* =========================
+   Relatórios
+========================= */
+let REPORT_SECTION = "diario";
+function setReportSection(sec){
+  REPORT_SECTION = sec;
+  document.querySelectorAll("#reportTabs .subtab").forEach(t=>t.classList.toggle("active", t.dataset.rsec===sec));
+  document.getElementById("report-diario").style.display = (sec==="diario") ? "block" : "none";
+  document.getElementById("report-semanal").style.display = (sec==="semanal") ? "block" : "none";
+  document.getElementById("report-total").style.display = (sec==="total") ? "block" : "none";
+
+  if(sec==="diario") renderDailyReport();
+  if(sec==="semanal") renderWeeklyReport();
+  if(sec==="total") renderTotalReport();
+}
+
+function renderReports(){
+  const rd = document.getElementById("reportDay");
+  if(!rd.value) rd.value = todayISO();
+  renderDailyReport();
+
+  buildWeekSelect();
+  renderWeeklyReport();
+  renderTotalReport();
+
+  setReportSection(REPORT_SECTION);
+}
+
+function dailyTemplate(date){
+  const d = DB.reportsDaily[date] || {};
+  return {
+    dev: Number(d.dev||0),
+    prep: Number(d.prep||0),
+    train: Number(d.train||0),
+    comm: Number(d.comm||0),
+    care: Number(d.care||0),
+    classes: Number(d.classes||0),
+    chapels: Number(d.chapels||0),
+    baptisms: Number(d.baptisms||0)
+  };
+}
+
+function renderDailyReport(){
+  const date = document.getElementById("reportDay").value || todayISO();
+  const d = dailyTemplate(date);
+
+  document.getElementById("dailyForm").innerHTML = `
+    <div class="two">
+      <div>
+        <label>Horas dedicadas à devoção pessoal</label>
+        <input class="input" id="rDev" type="number" step="0.25" min="0" value="${d.dev}">
+      </div>
+      <div>
+        <label>Horas no preparo/estudo</label>
+        <input class="input" id="rPrep" type="number" step="0.25" min="0" value="${d.prep}">
+      </div>
+    </div>
+
+    <div class="two">
+      <div>
+        <label>Horas em treinamento</label>
+        <input class="input" id="rTrain" type="number" step="0.25" min="0" value="${d.train}">
+      </div>
+      <div>
+        <label>Horas em ações comunitárias</label>
+        <input class="input" id="rComm" type="number" step="0.25" min="0" value="${d.comm}">
+      </div>
+    </div>
+
+    <div class="two">
+      <div>
+        <label>Número de atendimentos pastorais</label>
+        <input class="input" id="rCare" type="number" min="0" value="${d.care}">
+      </div>
+      <div>
+        <label>Número de estudos bíblicos</label>
+        <input class="input" id="rClasses" type="number" min="0" value="${d.classes}">
+      </div>
+    </div>
+
+    <div class="two">
+      <div>
+        <label>Número de capelas/aulas</label>
+        <input class="input" id="rChapels" type="number" min="0" value="${d.chapels}">
+      </div>
+      <div>
+        <label>Número de batismos</label>
+        <input class="input" id="rBaptisms" type="number" min="0" value="${d.baptisms}">
+      </div>
+    </div>
+  `;
+}
+
+function saveDailyReport(){
+  const date = document.getElementById("reportDay").value || todayISO();
+  DB.reportsDaily[date] = {
+    dev: Number(document.getElementById("rDev").value || 0),
+    prep: Number(document.getElementById("rPrep").value || 0),
+    train: Number(document.getElementById("rTrain").value || 0),
+    comm: Number(document.getElementById("rComm").value || 0),
+    care: Number(document.getElementById("rCare").value || 0),
+    classes: Number(document.getElementById("rClasses").value || 0),
+    chapels: Number(document.getElementById("rChapels").value || 0),
+    baptisms: Number(document.getElementById("rBaptisms").value || 0),
+  };
+  save(DB);
+  buildWeekSelect();
+  renderWeeklyReport();
+  renderTotalReport();
+  renderPainel();
+  if(document.getElementById("sec-stats").classList.contains("active")) renderStats();
+  alert("Relatório diário salvo.");
+}
+
+function clearDailyReport(){
+  const date = document.getElementById("reportDay").value || todayISO();
+  if(!confirm("Limpar os números deste dia?")) return;
+  delete DB.reportsDaily[date];
+  save(DB);
+  renderDailyReport();
+  buildWeekSelect();
+  renderWeeklyReport();
+  renderTotalReport();
+  renderPainel();
+  if(document.getElementById("sec-stats").classList.contains("active")) renderStats();
+}
+
+function buildWeekSelect(){
+  const sel = document.getElementById("weekSelect");
+  const weeks = listWeeks();
+  sel.innerHTML = weeks.map((w,i)=>`<option value="${i}">Semana ${i+1}: ${w.start} → ${w.end}</option>`).join("");
+  if(sel.selectedIndex < 0) sel.selectedIndex = 0;
+}
+
+function listWeeks(){
+  let start = DB.config.start;
+  let end = DB.config.end;
+
+  const keys = Object.keys(DB.reportsDaily || {}).sort();
+  if((!start || !end) && keys.length){
+    start = start || keys[0];
+    end = end || keys[keys.length-1];
+  }
+  if(!start || !end){
+    start = todayISO();
+    end = todayISO();
+  }
+
+  const s0 = startOfWeekSun(start);
+  const e0 = endOfWeekSat(end);
+
+  const weeks = [];
+  let cur = s0;
+  while(cur <= e0){
+    weeks.push({ start: cur, end: addDays(cur, 6) });
+    cur = addDays(cur, 7);
+  }
+  return weeks;
+}
+
+function weeklySum(week){
+  const t = { dev:0, prep:0, train:0, comm:0, care:0, classes:0, chapels:0, baptisms:0 };
+  for(let i=0;i<7;i++){
+    const d = addDays(week.start, i);
+    const r = DB.reportsDaily[d];
+    if(!r) continue;
+    t.dev += Number(r.dev||0);
+    t.prep += Number(r.prep||0);
+    t.train += Number(r.train||0);
+    t.comm += Number(r.comm||0);
+    t.care += Number(r.care||0);
+    t.classes += Number(r.classes||0);
+    t.chapels += Number(r.chapels||0);
+    t.baptisms += Number(r.baptisms||0);
+  }
+  return t;
+}
+
+function renderWeeklyReport(){
+  const sel = document.getElementById("weekSelect");
+  const weeks = listWeeks();
+  const idx = Number(sel.value || 0);
+  const w = weeks[idx] || weeks[0];
+  if(!w){
+    document.getElementById("weeklyReportBox").innerHTML = `<div class="note">Sem semanas ainda.</div>`;
+    return;
+  }
+
+  const t = weeklySum(w);
+
+  const days = [];
+  for(let i=0;i<7;i++){
+    const d = addDays(w.start, i);
+    const r = DB.reportsDaily[d];
+    days.push({
+      date: d,
+      filled: !!r,
+      classes: Number(r?.classes||0),
+      care: Number(r?.care||0),
+      chapels: Number(r?.chapels||0),
+      baptisms: Number(r?.baptisms||0)
+    });
+  }
+
+  document.getElementById("weeklyReportBox").innerHTML = `
+    <div class="list">
+      ${reportRow("Horas devoção", format1(t.dev))}
+      ${reportRow("Horas preparo/estudo", format1(t.prep))}
+      ${reportRow("Horas treinamento", format1(t.train))}
+      ${reportRow("Horas ações comunitárias", format1(t.comm))}
+      ${reportRow("Atendimentos pastorais", t.care)}
+      ${reportRow("Classes bíblicas", t.classes)}
+      ${reportRow("Capelas/aulas", t.chapels)}
+      ${reportRow("Batismos", t.baptisms)}
+    </div>
+
+    <div class="hr"></div>
+    <h2>Dias da semana</h2>
+    <div class="note">Se um dia estiver “vazio”, é porque você não preencheu o relatório daquele dia.</div>
+
+    <div class="list">
+      ${days.map(d=>`
+        <div class="item">
+          <div>
+            <strong>${d.date}</strong>
+            <div><small>${d.filled ? `Classes: ${d.classes} • Atendimentos: ${d.care} • Capelas: ${d.chapels} • Batismos: ${d.baptisms}` : "Sem preenchimento"}</small></div>
+          </div>
+          <button class="btn" onclick="jumpToDay('${d.date}')">Abrir dia</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function jumpToDay(date){
+  setReportSection("diario");
+  document.getElementById("reportDay").value = date;
+  renderDailyReport();
+}
+
+function renderTotalReport(){
+  const cfg = DB.config;
+  const start = cfg.start || null;
+  const end = cfg.end || null;
+
+  const t = (start && end) ? sumDailyReports(start, end) : sumDailyReports(null, null);
+
+  document.getElementById("totalReportBox").innerHTML = `
+    <div class="list">
+      ${reportRow("Horas devoção", format1(t.dev))}
+      ${reportRow("Horas preparo/estudo", format1(t.prep))}
+      ${reportRow("Horas treinamento", format1(t.train))}
+      ${reportRow("Horas ações comunitárias", format1(t.comm))}
+      ${reportRow("Atendimentos pastorais", t.care)}
+      ${reportRow("Classes bíblicas", t.classes)}
+      ${reportRow("Capelas/aulas", t.chapels)}
+      ${reportRow("Batismos", t.baptisms)}
+    </div>
+  `;
+}
+
+function reportRow(title, value){
+  return `
+    <div class="item">
+      <div><strong>${escapeHtml(title)}</strong><div><small>${escapeHtml(String(value))}</small></div></div>
+      <span class="badge"><span class="dot"></span>${escapeHtml(String(value))}</span>
+    </div>
+  `;
+}
+
+/* =========================
+   Stats
+========================= */
+function renderStats(){
+  // funnel
+  const funnel = {};
+  for(const s of STAGES) funnel[s] = 0;
+  DB.people.forEach(p=>{ funnel[p.stage] = (funnel[p.stage]||0) + 1; });
+
+  document.getElementById("funnelBox").innerHTML = STAGES.map(s=>`
+    <div class="item">
+      <div><strong>${escapeHtml(s)}</strong><div><small>${funnel[s]||0} pessoa(s)</small></div></div>
+      <span class="badge"><span class="dot"></span>${funnel[s]||0}</span>
+    </div>
+  `).join("");
+
+  // rate box
+  const rateBox = document.getElementById("rateBox");
+  if(DB.config.goals !== "on"){
+    rateBox.innerHTML = `<div class="note">Metas desativadas. Ative em Config para ver taxa meta/real.</div>`;
+  } else {
+    const cfg = DB.config;
+    const ratio = Math.max(1, Number(cfg.ratioClassesPerBaptism||4));
+    const start = cfg.start || null;
+    const end = cfg.end || null;
+    const total = (start && end) ? sumDailyReports(start, end) : sumDailyReports(null, null);
+    const realRate = total.baptisms>0 ? (total.classes / total.baptisms) : null;
+
+    rateBox.innerHTML = `
+      <div class="item">
+        <div><strong>Meta</strong><div><small>${ratio}:1</small></div></div>
+        <span class="badge"><span class="dot"></span>${ratio}:1</span>
+      </div>
+      <div class="item">
+        <div><strong>Real (pelos relatórios)</strong><div><small>${realRate===null ? "— (sem batismos)" : format1(realRate)+":1"}</small></div></div>
+        <span class="badge"><span class="dot ${realRate!==null && realRate<=ratio ? 'ok':'warn'}"></span>${realRate===null ? "—" : format1(realRate)+":1"}</span>
+      </div>
+    `;
+  }
+
+  // charts 14 dias
+  const t = new Date(todayISO()+"T00:00:00");
+  const classes = [];
+  const care = [];
+  const labels = [];
+
+  for(let i=13;i>=0;i--){
+    const d = new Date(t.getTime() - i*86400000).toISOString().slice(0,10);
+    const r = DB.reportsDaily[d] || {};
+    classes.push(Number(r.classes||0));
+    care.push(Number(r.care||0));
+    labels.push(d.slice(5));
+  }
+
+  drawLineChart("chartClasses", classes, labels);
+  drawLineChart("chartCare", care, labels);
+}
+
+function drawLineChart(canvasId, values, labels){
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0,0,c.width,c.height);
+
+  const pad = 30;
+  const w = c.width, h = c.height;
+  const max = Math.max(1, ...values);
+  const min = 0;
+
+  ctx.globalAlpha = 0.95;
+  ctx.strokeStyle = "rgba(15,23,42,.22)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad);
+  ctx.lineTo(pad, h-pad);
+  ctx.lineTo(w-pad, h-pad);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(15,23,42,.70)";
+  ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+  for(let i=0;i<=4;i++){
+    const y = pad + (h-2*pad) * (i/4);
+    ctx.strokeStyle = "rgba(15,23,42,.08)";
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w-pad, y); ctx.stroke();
+    const val = Math.round(max - (max-min)*(i/4));
+    ctx.fillText(String(val), 6, y+4);
+  }
+
+  const stepX = (w - 2*pad) / Math.max(1, values.length-1);
+  ctx.strokeStyle = "rgba(14,165,233,.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  values.forEach((v,i)=>{
+    const x = pad + i*stepX;
+    const y = (h-pad) - ((v-min)/(max-min || 1))*(h-2*pad);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  values.forEach((v,i)=>{
+    const x = pad + i*stepX;
+    const y = (h-pad) - ((v-min)/(max-min || 1))*(h-2*pad);
+    ctx.fillStyle = "rgba(34,197,94,.95)";
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  });
+
+  ctx.fillStyle = "rgba(15,23,42,.65)";
+  const every = Math.ceil(values.length/7);
+  labels.forEach((lab,i)=>{
+    if(i%every!==0 && i!==labels.length-1) return;
+    const x = pad + i*stepX;
+    ctx.fillText(lab, x-10, h-10);
+  });
+}
+
+/* =========================
+   Modal
+========================= */
+function showModal(){
+  document.getElementById("modal").style.display = "block";
+  document.body.style.overflow = "hidden";
+}
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+  document.body.style.overflow = "";
+}
+
+/* =========================
+   Backup import/export
+========================= */
+function exportData(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pastoral_escolar_backup_${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function triggerImport(){
+  document.getElementById("importFile").click();
+}
+function importData(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const obj = JSON.parse(reader.result);
+      if(!obj || !obj.config || !obj.people || !obj.activities || !obj.reportsDaily) throw new Error("Formato inválido");
+      DB = obj;
+
+      if(!("goals" in DB.config)) DB.config.goals = "on";
+      if(!("baptismsTarget" in DB.config)) DB.config.baptismsTarget = 0;
+      if(!("ratioClassesPerBaptism" in DB.config)) DB.config.ratioClassesPerBaptism = 4;
+      if(!("careDaily" in DB.config)) DB.config.careDaily = 2;
+      if(!("classesDaily" in DB.config)) DB.config.classesDaily = 1;
+
+      if(Array.isArray(DB.people)){
+        DB.people.forEach(p=>{
+          if(!("statusABC" in p)) p.statusABC="";
+          if(!("type" in p)) p.type="Aluno";
+          if(!("stage" in p)) p.stage="Contato";
+        });
+      }
+
+      save(DB);
+      renderTop();
+      openSection("painel");
+      alert("Importado com sucesso.");
+    }catch(e){
+      alert("Falha ao importar: arquivo inválido.");
+    }finally{
+      ev.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* =========================
+   Service Worker
+========================= */
+function registerSW(){
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+}
+
+/* =========================
+   Boot
+========================= */
+function boot(){
+  renderTop();
+
+  const ad = document.getElementById("agendaDay");
+  if(ad) ad.value = todayISO();
+
+  const rd = document.getElementById("reportDay");
+  if(rd) rd.value = todayISO();
+
+  setPeopleType("Aluno");
+
+  renderPainel();
+  renderAgenda();
+  renderCalendar();
+  renderTodayActs();
+  renderReports();
+  renderStats();
+
+  registerSW();
+}
+
+if(isAuthorized()){
+  boot();
+}else{
+  showAuthGate();
+}
+</script>
+</body>
+</html>
