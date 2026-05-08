@@ -1755,6 +1755,31 @@ function deleteAct(id){
   if(document.getElementById("sec-stats").classList.contains("active")) renderStats();
 }
 
+function parseHoras(valor){
+  if(valor === undefined || valor === null || valor === "") return 0;
+
+  valor = String(valor).replace(",", ".");
+
+  const partes = valor.split(".");
+
+  const horas = parseInt(partes[0]) || 0;
+  const minutos = parseInt(partes[1]) || 0;
+
+  return (horas * 60) + minutos;
+}
+
+function formatHoras(minutos){
+  minutos = Number(minutos || 0);
+
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+
+  if(h === 0) return `${m}min`;
+  if(m === 0) return `${h}h`;
+
+  return `${h}h${String(m).padStart(2, "0")}`;
+}
+
 /* =========================
    Painel (metas) — goals ON/OFF
 ========================= */
@@ -1767,10 +1792,10 @@ function sumDailyReports(start=null, end=null){
   for(const k of keys){
     if(!inRange(k, start, end)) continue;
     const d = DB.reportsDaily[k] || {};
-    t.dev += Number(d.dev||0);
-    t.prep += Number(d.prep||0);
-    t.train += Number(d.train||0);
-    t.comm += Number(d.comm||0);
+    t.dev += parseHoras(d.dev);
+t.prep += parseHoras(d.prep);
+t.train += parseHoras(d.train);
+t.comm += parseHoras(d.comm);
     t.care += Number(d.care||0);
     t.classes += Number(d.classes||0);
     t.chapels += Number(d.chapels||0);
@@ -2022,22 +2047,22 @@ function renderDailyReport(){
     <div class="two">
       <div>
         <label>Horas dedicadas à devoção pessoal</label>
-        <input class="input" id="rDev" type="number" step="0.25" min="0" value="${d.dev}">
+        <input class="input" id="rDev" type="text" step="0.25" min="0" value="${d.dev}">
       </div>
       <div>
         <label>Horas no preparo/estudo</label>
-        <input class="input" id="rPrep" type="number" step="0.25" min="0" value="${d.prep}">
+        <input class="input" id="rPrep" type="text" step="0.25" min="0" value="${d.prep}">
       </div>
     </div>
 
     <div class="two">
       <div>
         <label>Horas em treinamento</label>
-        <input class="input" id="rTrain" type="number" step="0.25" min="0" value="${d.train}">
+        <input class="input" id="rTrain" type="text" step="0.25" min="0" value="${d.train}">
       </div>
       <div>
         <label>Horas em ações comunitárias</label>
-        <input class="input" id="rComm" type="number" step="0.25" min="0" value="${d.comm}">
+        <input class="input" id="rComm" type="text" step="0.25" min="0" value="${d.comm}">
       </div>
     </div>
 
@@ -2178,10 +2203,10 @@ function renderWeeklyReport(){
 
   document.getElementById("weeklyReportBox").innerHTML = `
     <div class="list">
-      ${reportRow("Horas devoção", format1(t.dev))}
-      ${reportRow("Horas preparo/estudo", format1(t.prep))}
-      ${reportRow("Horas treinamento", format1(t.train))}
-      ${reportRow("Horas ações comunitárias", format1(t.comm))}
+      ${reportRow("Horas devoção", formatHoras(t.dev))}
+      ${reportRow("Horas preparo/estudo", formatHoras(t.prep))}
+      ${reportRow("Horas treinamento", formatHoras(t.train))}
+      ${reportRow("Horas ações comunitárias", formatHoras(t.comm))}
       ${reportRow("Atendimentos pastorais", t.care)}
       ${reportRow("Classes bíblicas", t.classes)}
       ${reportRow("Capelas/aulas", t.chapels)}
